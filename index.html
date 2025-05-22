@@ -1,48 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Vista previa LinkedIn</title>
-  <style>
-    body { font-family: sans-serif; background: #f9f9f9; padding: 40px; text-align: center; }
-    img { max-width: 100%; margin-top: 20px; border-radius: 10px; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    button { padding: 12px 30px; margin: 20px 10px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
-    .approve { background: #28a745; color: white; }
-    .cancel { background: #dc3545; color: white; }
-    textarea { width: 100%; height: 200px; margin-top: 20px; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
-  </style>
+<meta charset="utf-8" />
+<title>Pre-visualización</title>
+<style>
+ body{font-family:sans-serif;background:#f7f7f7;margin:0;padding:2rem}
+ .box{background:#fff;max-width:780px;margin:auto;padding:2rem;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,.1)}
+ img{max-width:100%;border-radius:8px;margin-top:1rem}
+ .btn{display:inline-block;margin:1rem .5rem;padding:.6rem 1.4rem;border:0;border-radius:6px;font-weight:bold;color:#fff;cursor:pointer}
+ .ok{background:#28a745}.ko{background:#dc3545}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1 id="title"></h1>
-    <textarea id="text" readonly></textarea>
-    <img id="img" src="" alt="Imagen generada">
-    <div>
-      <button class="approve" onclick="responder(true)">✅ Publicar</button>
-      <button class="cancel" onclick="responder(false)">❌ Cancelar</button>
-    </div>
+<div class="box">
+  <h1>Pre-visualización</h1>
+  <p id="texto"></p>
+  <img id="img" />
+  <div>
+    <button class="btn ok" onclick="decidir('publicar')">✅ Publicar</button>
+    <button class="btn ko" onclick="decidir('cancelar')">❌ Cancelar</button>
   </div>
+</div>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    document.getElementById('title').textContent = decodeURIComponent(params.get('title') || '');
-    document.getElementById('text').textContent = decodeURIComponent(params.get('text') || '');
-    document.getElementById('img').src = decodeURIComponent(params.get('img') || '');
+<script>
+ // Rellenamos texto + imagen
+ document.getElementById('texto').textContent = "{{ $json.texto }}";
+ document.getElementById('img').src = "{{ $json.url }}";
 
-    function responder(aprobar) {
-      fetch("https://paneln8n.jelge.vip/webhook/confirmar-publicacion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: aprobar ? "publicar" : "cancelar",
-          sessionId: params.get("session") || "sin-id"
-        })
-      }).then(() => {
-        alert("Tu elección ha sido registrada.");
-        window.close();
-      });
-    }
-  </script>
+ // Lanza la decisión al webhook de confirmación
+ function decidir(accion){
+   fetch("{{ $env.confirmWebhook }}",{
+     method:"POST",
+     headers:{ "Content-Type":"application/json" },
+     body:JSON.stringify({ accion, imagen:"{{ $json.fileName }}" })
+   }).then(()=> window.close());
+ }
+</script>
 </body>
 </html>
