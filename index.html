@@ -1,40 +1,81 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<title>Pre-visualización</title>
-<style>
- body{font-family:sans-serif;background:#f7f7f7;margin:0;padding:2rem}
- .box{background:#fff;max-width:780px;margin:auto;padding:2rem;border-radius:10px;box-shadow:0 0 15px rgba(0,0,0,.1)}
- img{max-width:100%;border-radius:8px;margin-top:1rem}
- .btn{display:inline-block;margin:1rem .5rem;padding:.6rem 1.4rem;border:0;border-radius:6px;font-weight:bold;color:#fff;cursor:pointer}
- .ok{background:#28a745}.ko{background:#dc3545}
-</style>
+  <meta charset="UTF-8">
+  <title>Previsualización de la publicación</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 2em;
+      text-align: center;
+    }
+    .card {
+      background: white;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+    }
+    button {
+      margin: 1em;
+      padding: 0.7em 2em;
+      border: none;
+      border-radius: 5px;
+      font-size: 1em;
+      cursor: pointer;
+    }
+    .publicar {
+      background-color: #28a745;
+      color: white;
+    }
+    .cancelar {
+      background-color: #dc3545;
+      color: white;
+    }
+    #spinner {
+      display: none;
+      margin-top: 1em;
+    }
+  </style>
 </head>
 <body>
-<div class="box">
-  <h1>Pre-visualización</h1>
-  <p id="texto"></p>
-  <img id="img" />
-  <div>
-    <button class="btn ok" onclick="decidir('publicar')">✅ Publicar</button>
-    <button class="btn ko" onclick="decidir('cancelar')">❌ Cancelar</button>
+  <div class="card">
+    <h2>¿Quieres publicar esto en LinkedIn?</h2>
+    <p>{{ $json.texto }}</p>
+    <img src="{{ $json.urlPrevisualizacion }}" alt="Imagen de la publicación">
+
+    <div>
+      <button class="publicar" onclick="responder('publicar')">Publicar</button>
+      <button class="cancelar" onclick="responder('cancelar')">Cancelar</button>
+      <div id="spinner">⏳ Procesando...</div>
+    </div>
   </div>
-</div>
 
-<script>
- // Rellenamos texto + imagen
- document.getElementById('texto').textContent = "{{ $json.texto }}";
- document.getElementById('img').src = "{{ $json.url }}";
+  <script>
+    function responder(accion) {
+      document.querySelectorAll("button").forEach(b => b.disabled = true);
+      document.getElementById("spinner").style.display = "block";
 
- // Lanza la decisión al webhook de confirmación
- function decidir(accion){
-   fetch("{{ $env.confirmWebhook }}",{
-     method:"POST",
-     headers:{ "Content-Type":"application/json" },
-     body:JSON.stringify({ accion, imagen:"{{ $json.fileName }}" })
-   }).then(()=> window.close());
- }
-</script>
+      fetch("{{ $execution.resumeUrl }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          accion: accion,
+          texto: "{{ $json.texto }}",
+          imagen: "{{ $json.fileName }}"
+        })
+      }).then(() => {
+        document.getElementById("spinner").innerText = "✅ ¡Respuesta enviada!";
+      }).catch(() => {
+        document.getElementById("spinner").innerText = "❌ Error al enviar";
+      });
+    }
+  </script>
 </body>
 </html>
